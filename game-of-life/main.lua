@@ -1,7 +1,27 @@
+-- imports
+local game = require "game"
+
+-- variables
+local game_state = 'menu'
+local menus = {'Play', 'How To Play', 'Quit'}
+local selected_menu_item = 1
+local window_width
+local window_height
+local spacing
+
+-- functions
+local draw_menu
+local menu_keypressed
+local draw_how_to_play
+local how_to_play_keypressed
+local game_keypressed
+
+
 function love.load()
+
     love.window.setTitle("Game of Life")
     love.graphics.setBackgroundColor(.15, .15, .15)
-    
+
     cell_size = 10
 
     grid_x_count = 80
@@ -16,75 +36,200 @@ function love.load()
         end
     end
 
+    -- get the width and height of the game window in order to center menu items
+    window_width, window_height = love.graphics.getDimensions()
+
+    -- value to calculate vertical positions of menu items
+    spacing = 40
+
     -- with this set to true, holding a key down will call love.keypressed repeatedly
     love.keyboard.setKeyRepeat(true)
+
 end
 
-function love.update()
-    -- calculate the cell where the cursor is at;
-    -- math.min sets a maximum value for the selected x/y (so it stays within the grid)
-    selected_x = math.min(math.floor(love.mouse.getX() / cell_size) + 1, grid_x_count)
-    selected_y = math.min(math.floor(love.mouse.getY() / cell_size) + 1, grid_y_count)
 
-    -- if cell is left clicked  --> set to alive
-    -- if cell is right clicked --> set to dead
-    if love.mouse.isDown(1) then
-        grid[selected_y][selected_x] = true
-    elseif love.mouse.isDown(2) then
-        grid[selected_y][selected_x] = false
-    end
-end
+function love.update(dt)
 
--- if any key is pressed, creates a new grid
-function love.keypressed()
-    local next_grid = {}
-
-    -- create next grid
-    for y = 1, grid_y_count do
-        next_grid[y] = {}
-        for x = 1, grid_x_count do
-            local neighbor_count = 0
-
-            for dy = -1, 1 do
-                for dx = -1, 1 do
-                    if not (dy == 0 and dx == 0)
-                    and grid[y + dy] -- check if cell is within grid
-                    and grid[y + dy][x + dx] then
-                        neighbor_count = neighbor_count + 1
-                    end
-                end
-            end
-            
-            -- if any cell has exactly 3 neighbors alive --> set to alive
-            -- if cell was alive and has 2 neighbors alive --> set to alive
-            -- else --> set to dead (false)
-            next_grid[y][x] = neighbor_count == 3 or (grid[y][x] and neighbor_count == 2)
-        end
+    if game_state == 'game' then
+        game.update()
     end
 
-    grid = next_grid
 end
+
 
 function love.draw()
-    for y = 1, grid_y_count do -- draws all the cells (every cell in every row)
-        for x = 1, grid_x_count do -- draws a row of cells
-            local cell_draw_size = cell_size - 1
 
-            if x == selected_x and y == selected_y then -- highlights selected cell
-                love.graphics.setColor(1, 1, 0)
-            elseif grid[y][x] == true then -- cell is alive -> color
-                love.graphics.setColor(1, 0, 1)
-            else
-                love.graphics.setColor(0, 0, 0) -- default color
-            end
-        
-            love.graphics.rectangle(
-                'fill',              --mode
-                (x - 1) * cell_size, -- top-left corner x
-                (y - 1) * cell_size, -- top-left corner y
-                cell_draw_size,      -- width
-                cell_draw_size       -- height
-            )
-        end
+    if game_state == 'menu' then
+        draw_menu()
+
+    elseif game_state == 'how-to-play' then
+        draw_how_to_play()
+
+    else -- game_state == 'game'
+        game.draw()
+
     end
+
+end
+
+
+function draw_menu()
+
+    local horizontal_center = window_width / 2
+    local vertical_center = window_height / 2
+    local start_y = vertical_center - (spacing * (#menus / 2))
+
+    -- use the game grid as background
+    game.draw()
+    
+    -- draw game title
+    love.graphics.setNewFont("JetBrainsMono-ExtraBold.ttf", 40)
+    love.graphics.setColor(0, 1, 1, 1)
+    love.graphics.printf("Conway's Game of Life", 0, 150, window_width, 'center')
+
+    -- set smaller font for the menu items
+    love.graphics.setNewFont("JetBrainsMono-Bold.ttf", 30)
+
+    -- draw menu items
+    for i = 1, #menus do
+
+        -- currently selected menu item is yellow
+        if i == selected_menu_item then
+            love.graphics.setColor(1, 1, 0, 1)
+
+        -- other menu items are white
+        else
+            love.graphics.setColor(1, 1, 1, 1)
+        
+        end
+
+        -- draw this menu item centered
+        love.graphics.printf(menus[i], 0, start_y + spacing * (i - 1), window_width, 'center')
+
+    end
+
+end
+
+
+function draw_how_to_play()
+    
+    -- use the game grid as background
+    game.draw()
+
+    local intro = "The Game of Life is a cellular automaton devised by the British " ..
+    "mathematician John Horton Conway in 1970. It is a zero-player game, meaning that " ..
+    "its evolution is determined by its initial state, requiring no further input. " ..
+    "One interacts with the Game of Life by creating an initial configuration and " ..
+    "observing how it evolves. The status of each cell changes each turn of the game " ..
+    "(also called a generation) depending on the statuses of that cell's 8 neighbors.\n\n"
+
+    local text = "== CONTROLS ==\n" ..
+    "> Left click to set a cell to alive\n" ..
+    "> Right click to set a cell to dead\n" ..
+    "> Press Esc to return to the menu\n" ..
+    "> Press Delete to reset the game\n" ..
+    "> Press any other key to step foward in time\n"
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setNewFont("JetBrainsMono-Bold.ttf", 20)
+    love.graphics.printf(
+        intro .. text,
+        0,
+        80,
+        window_width,
+        'center'
+    )
+
+    love.graphics.setColor(1, 1, 0, 1)
+    love.graphics.setNewFont("JetBrainsMono-ExtraBold.ttf", 20)
+    love.graphics.printf(
+        "Press Esc to return",
+        0,
+        500,
+        window_width,
+        'center'
+    )
+
+end
+
+
+
+function love.keypressed(key, scan_code, is_repeat)
+
+    if game_state == 'menu' then
+        menu_keypressed(key)
+
+    elseif game_state == 'how-to-play' then
+        how_to_play_keypressed(key)
+
+    else -- game_state == 'game'
+        game_keypressed(key)
+
+    end
+
+end
+
+
+function menu_keypressed(key)
+
+    -- pressing Esc on the main menu quits the game
+    if key == 'escape' then
+        love.event.quit()
+
+    -- pressing up selects the previous menu item, wrapping to the bottom if necessary
+    elseif key == 'up' then
+
+        selected_menu_item = selected_menu_item - 1
+
+        if selected_menu_item < 1 then
+            selected_menu_item = #menus
+        end
+
+    -- pressing down selects the next menu item, wrapping to the top if necessary
+    elseif key == 'down' then
+
+        selected_menu_item = selected_menu_item + 1
+
+        if selected_menu_item > #menus then
+            selected_menu_item = 1
+        end
+
+    -- pressing enter changes the game state (or quits the game)
+    elseif key == 'return' or key == 'kpenter' then
+
+        if menus[selected_menu_item] == 'Play' then
+            game_state = 'game'
+
+        elseif menus[selected_menu_item] == 'How To Play' then
+            game_state = 'how-to-play'
+
+        elseif menus[selected_menu_item] == 'Quit' then
+            love.event.quit()
+        end
+
+    end
+
+end
+
+
+function how_to_play_keypressed(key)
+
+    if key == 'escape' then
+        game_state = 'menu'
+    end
+
+end
+
+
+function game_keypressed(key)
+
+    if key == 'escape' then
+        game.reset()
+        game_state = 'menu'
+    elseif key == 'delete' then
+        game.reset()
+    else
+        game.keypressed()
+    end
+
 end
