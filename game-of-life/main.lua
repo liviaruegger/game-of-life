@@ -61,13 +61,10 @@ function love.draw()
 
     if game_state == 'menu' then
         draw_menu()
-
     elseif game_state == 'how-to-play' then
         draw_how_to_play()
-
     else -- game_state == 'game'
         game.draw()
-
     end
 
 end
@@ -94,13 +91,10 @@ function draw_menu()
     for i = 1, #menus do
 
         -- currently selected menu item is yellow
-        if i == selected_menu_item then
+        if i == selected_menu_item then 
             love.graphics.setColor(1, 1, 0, 1)
-
-        -- other menu items are white
-        else
+        else -- other menu items are white
             love.graphics.setColor(1, 1, 1, 1)
-        
         end
 
         -- draw this menu item centered
@@ -153,18 +147,14 @@ function draw_how_to_play()
 end
 
 
-
 function love.keypressed(key, scan_code, is_repeat)
 
     if game_state == 'menu' then
         menu_keypressed(key)
-
     elseif game_state == 'how-to-play' then
         how_to_play_keypressed(key)
-
     else -- game_state == 'game'
         game_keypressed(key)
-
     end
 
 end
@@ -178,27 +168,22 @@ function menu_keypressed(key)
 
     -- pressing up selects the previous menu item (if existing)
     elseif key == 'up' then
-
         if selected_menu_item >= 2 then
             selected_menu_item = selected_menu_item - 1
         end
 
     -- pressing down selects the next menu item (if existing) 
     elseif key == 'down' then
-
         if selected_menu_item < #menus then
             selected_menu_item = selected_menu_item + 1
         end
 
     -- pressing enter changes the game state (or quits the game)
     elseif key == 'return' or key == 'kpenter' then
-
         if menus[selected_menu_item] == 'Play' then
             game_state = 'game'
-
         elseif menus[selected_menu_item] == 'How To Play' then
             game_state = 'how-to-play'
-
         elseif menus[selected_menu_item] == 'Quit' then
             love.event.quit()
         end
