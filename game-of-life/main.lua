@@ -40,7 +40,7 @@ function love.load()
     window_width, window_height = love.graphics.getDimensions()
 
     -- value to calculate vertical positions of menu items
-    spacing = 40
+    spacing = 45
 
     -- with this set to true, holding a key down will call love.keypressed repeatedly
     love.keyboard.setKeyRepeat(true)
@@ -176,22 +176,18 @@ function menu_keypressed(key)
     if key == 'escape' then
         love.event.quit()
 
-    -- pressing up selects the previous menu item, wrapping to the bottom if necessary
+    -- pressing up selects the previous menu item (if existing)
     elseif key == 'up' then
 
-        selected_menu_item = selected_menu_item - 1
-
-        if selected_menu_item < 1 then
-            selected_menu_item = #menus
+        if selected_menu_item >= 2 then
+            selected_menu_item = selected_menu_item - 1
         end
 
-    -- pressing down selects the next menu item, wrapping to the top if necessary
+    -- pressing down selects the next menu item (if existing) 
     elseif key == 'down' then
 
-        selected_menu_item = selected_menu_item + 1
-
-        if selected_menu_item > #menus then
-            selected_menu_item = 1
+        if selected_menu_item < #menus then
+            selected_menu_item = selected_menu_item + 1
         end
 
     -- pressing enter changes the game state (or quits the game)
